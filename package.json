@@ -1,22 +1,40 @@
 {
-  "name": "mangataste",
+  "name": "manakonomi",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@expo/metro-runtime": "~56.0.15",
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.18.0",
+    "@react-navigation/native": "^7.3.1",
     "expo": "~56.0.11",
+    "expo-auth-session": "~56.0.14",
+    "expo-crypto": "~56.0.4",
+    "expo-font": "~56.0.6",
+    "expo-localization": "~56.0.6",
+    "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
+    "expo-web-browser": "~56.0.5",
+    "firebase": "^12.14.0",
     "react": "19.2.3",
-    "react-native": "0.85.3"
+    "react-dom": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "workbox-cli": "^7.4.1"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:web": "expo export -p web && npx workbox-cli generateSW workbox-config.js"
   },
   "private": true
 }
