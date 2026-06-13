@@ -12,8 +12,8 @@ interface FavoriteStarProps {
   onCover?: boolean;
 }
 
-/** Favorite toggle: filled accent star when favorited, outline otherwise. */
-export function FavoriteStar({ manga, size = 20, onCover = false }: FavoriteStarProps) {
+/** Favorite toggle: filled coral heart when favorited, outline otherwise. */
+export function FavoriteStar({ manga, size = 22, onCover = false }: FavoriteStarProps) {
   const tr = useT();
   const { favoriteOf, toggleFavorite } = useUserData();
   const favorite = favoriteOf(manga.id);
@@ -29,9 +29,9 @@ export function FavoriteStar({ manga, size = 20, onCover = false }: FavoriteStar
       testID="favorite"
     >
       <Ionicons
-        name={favorite ? 'star' : 'star-outline'}
+        name={favorite ? 'heart' : 'heart-outline'}
         size={size}
-        color={favorite ? colors.accent : colors.textSecondary}
+        color={favorite ? colors.favorite : colors.textSecondary}
       />
     </Pressable>
   );

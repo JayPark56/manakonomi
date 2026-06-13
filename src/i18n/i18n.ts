@@ -142,6 +142,11 @@ const STRINGS = {
     ko: '4점 이상 별점을 3개 이상 매기면 추천이 열려요',
     ja: '4つ星以上の評価を3作品以上つけるとおすすめが表示されます',
   },
+  browseMore: {
+    en: 'Not seeing your taste? Browse more',
+    ko: '취향인 작품이 없으신가요? 다른 작품 찾아보기',
+    ja: '好みの作品がない？ 他の作品を探す',
+  },
   selectionClear: { en: 'Clear', ko: '지우기', ja: 'クリア' },
   selectionGo: { en: 'Get recommendations', ko: '추천 보기', ja: 'おすすめを見る' },
   reasonFallback: {

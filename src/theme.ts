@@ -8,6 +8,8 @@ export const colors = {
   textSecondary: 'rgba(255, 255, 255, 0.6)',
   textPlaceholder: 'rgba(255, 255, 255, 0.35)',
   accent: '#FFD60A',
+  /** Coral pink — favorite heart fill + brand subtitle. */
+  favorite: '#FF6B81',
   /** Text/icons on accent-filled surfaces. */
   onAccent: '#000000',
   /** Dark scrim behind controls overlaid on cover images. */

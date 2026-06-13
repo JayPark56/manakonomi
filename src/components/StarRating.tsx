@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Octicons } from '@expo/vector-icons';
 import type { Manga } from '../api/anilist';
 import { a11yRateLabel } from '../i18n/i18n';
 import { useLanguage, useT } from '../i18n/LanguageContext';
@@ -42,7 +42,10 @@ export function StarRating({ manga, size = 18 }: StarRatingProps) {
           rating >= star ? 'full' : rating >= star - 0.5 ? 'half' : 'none';
         return (
           <View key={star} style={{ width: size, height: size }}>
-            <Ionicons name="star-outline" size={size} color={colors.textSecondary} />
+            {/* Octicons star is softer/rounder than the sharp Ionicons star.
+                Filled glyph is clipped over the outline for half values; both
+                share metrics so the 50%-width clip aligns cleanly. */}
+            <Octicons name="star" size={size} color={colors.textSecondary} />
             {fill !== 'none' && (
               <View
                 style={[
@@ -50,7 +53,7 @@ export function StarRating({ manga, size = 18 }: StarRatingProps) {
                   { width: fill === 'full' ? size : size / 2, height: size },
                 ]}
               >
-                <Ionicons name="star" size={size} color={colors.accent} />
+                <Octicons name="star-fill" size={size} color={colors.accent} />
               </View>
             )}
             <Pressable

@@ -48,28 +48,30 @@ export function LibraryScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <ThemedText weight="bold" size={typography.header} style={styles.header}>
-        {tr('tabLibrary')}
-      </ThemedText>
-      <AuthStatusRow />
-      {sections.length === 0 ? (
-        <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
-          {tr('libraryEmpty')}
+      <View style={styles.container}>
+        <ThemedText weight="bold" size={typography.header} style={styles.header}>
+          {tr('tabLibrary')}
         </ThemedText>
-      ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item, index) => `${item.manga.id}:${index}`}
-          stickySectionHeadersEnabled={false}
-          contentContainerStyle={styles.listContent}
-          renderSectionHeader={({ section }) => (
-            <ThemedText weight="bold" size={typography.section} style={styles.sectionHeader}>
-              {section.title}
-            </ThemedText>
-          )}
-          renderItem={({ item }) => <LibraryRow item={item} />}
-        />
-      )}
+        <AuthStatusRow />
+        {sections.length === 0 ? (
+          <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
+            {tr('libraryEmpty')}
+          </ThemedText>
+        ) : (
+          <SectionList
+            sections={sections}
+            keyExtractor={(item, index) => `${item.manga.id}:${index}`}
+            stickySectionHeadersEnabled={false}
+            contentContainerStyle={styles.listContent}
+            renderSectionHeader={({ section }) => (
+              <ThemedText weight="bold" size={typography.section} style={styles.sectionHeader}>
+                {section.title}
+              </ThemedText>
+            )}
+            renderItem={({ item }) => <LibraryRow item={item} />}
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -95,10 +97,16 @@ function AuthStatusRow() {
   if (mode === 'google' && uid) {
     return (
       <View style={styles.authRow}>
-        <ThemedText weight="medium" size={typography.caption} color={colors.textSecondary}>
+        <ThemedText
+          weight="medium"
+          size={typography.caption}
+          color={colors.textSecondary}
+          numberOfLines={1}
+          style={styles.authAccount}
+        >
           {tr('syncOn')}
         </ThemedText>
-        <Pressable onPress={() => void signOutToGuest()} hitSlop={8}>
+        <Pressable onPress={() => void signOutToGuest()} hitSlop={8} style={styles.signOut}>
           {({ pressed }) => (
             <ThemedText weight="semiBold" size={typography.caption} color={pressed ? colors.accent : colors.textPrimary}>
               {tr('signOut')}
@@ -181,13 +189,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  // Centered/capped column (matches Search/Recommendations). Centering lives
+  // here, NOT on the SectionList contentContainer, which clipped the sign-out
+  // control and rows on narrow native viewports.
+  container: {
     ...centeredContent,
+    flex: 1,
+  },
+  header: {
     marginTop: spacing.xl,
     paddingHorizontal: spacing.xl,
   },
   authRow: {
-    ...centeredContent,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -196,8 +209,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.sm,
   },
+  // Account label takes remaining width (truncating); sign-out never shrinks.
+  authAccount: {
+    flex: 1,
+  },
+  signOut: {
+    flexShrink: 0,
+  },
   authGuest: {
-    ...centeredContent,
     paddingHorizontal: spacing.xl,
     marginTop: spacing.xs,
     marginBottom: spacing.sm,
@@ -207,13 +226,11 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   empty: {
-    ...centeredContent,
     marginTop: spacing.xxl,
     textAlign: 'center',
     paddingHorizontal: spacing.xl,
   },
   listContent: {
-    ...centeredContent,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
   },

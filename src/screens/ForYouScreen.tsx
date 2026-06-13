@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import {
   errorKindOf,
   fetchRecommendations,
@@ -15,7 +15,7 @@ import { useLanguage, useT } from '../i18n/LanguageContext';
 import { buildTasteProfile, profileMatchNames, scoreByProfile } from '../lib/taste';
 import { useGridLayout, centeredContent } from '../lib/layout';
 import { useUserData } from '../user/UserDataContext';
-import { colors, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 import { RecommendationsScreen } from './RecommendationsScreen';
 
 const ERROR_KEY: Record<AniListErrorKind, StringKey> = {
@@ -37,7 +37,14 @@ type PoolState =
 export function ForYouScreen() {
   const tr = useT();
   const { lang } = useLanguage();
-  const { cardWidth } = useGridLayout();
+  const navigation = useNavigation();
+  const { numColumns, cardWidth } = useGridLayout();
+  // For You covers are intentionally smaller (~22%) than the column-filling
+  // width used elsewhere, in a fixed-width centered block so flexWrap still
+  // yields exactly numColumns per row (2 on phone / 4 on desktop).
+  const compactWidth = Math.round(cardWidth * 0.78);
+  const gridColumnGap = spacing.md;
+  const gridWidth = numColumns * compactWidth + (numColumns - 1) * gridColumnGap;
   const { data: userData } = useUserData();
   const [state, setState] = useState<PoolState>({ status: 'idle' });
   const [retryKey, setRetryKey] = useState(0);
@@ -124,68 +131,78 @@ export function ForYouScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <ThemedText weight="bold" size={typography.header} style={styles.header}>
-        {tr('forYouTitle')}
-      </ThemedText>
-
-      {!enoughRatings && (
-        <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
-          {tr('forYouEmpty')}
+      <View style={styles.container}>
+        <ThemedText weight="bold" size={typography.header} style={styles.header}>
+          {tr('forYouTitle')}
         </ThemedText>
-      )}
 
-      {enoughRatings && state.status === 'loading' && (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.textSecondary} size="large" />
-        </View>
-      )}
-
-      {enoughRatings && state.status === 'error' && (
-        <View style={styles.center}>
-          <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.errorText}>
-            {tr(ERROR_KEY[state.kind])}
+        {!enoughRatings && (
+          <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
+            {tr('forYouEmpty')}
           </ThemedText>
-          <Pressable
-            onPress={() => {
-              fetchedKeyRef.current = '';
-              setRetryKey((k) => k + 1);
-            }}
-            hitSlop={8}
-          >
-            {({ pressed }) => (
-              <ThemedText
-                weight="semiBold"
-                size={typography.rowTitle}
-                color={pressed ? colors.accent : colors.textPrimary}
-              >
-                {tr('retry')}
-              </ThemedText>
-            )}
-          </Pressable>
-        </View>
-      )}
+        )}
 
-      {enoughRatings && state.status === 'done' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {results.length === 0 ? (
-            <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
-              {tr('noRecs')}
+        {enoughRatings && state.status === 'loading' && (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.textSecondary} size="large" />
+          </View>
+        )}
+
+        {enoughRatings && state.status === 'error' && (
+          <View style={styles.center}>
+            <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.errorText}>
+              {tr(ERROR_KEY[state.kind])}
             </ThemedText>
-          ) : (
-            <View style={styles.grid}>
-              {results.map(({ manga }) => (
-                <MangaCard
-                  key={manga.id}
-                  manga={manga}
-                  reason={reasonOf(manga)}
-                  width={cardWidth}
-                  onPress={() => setStack([[manga.id]])}
-                />
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      )}
+            <Pressable
+              onPress={() => {
+                fetchedKeyRef.current = '';
+                setRetryKey((k) => k + 1);
+              }}
+              hitSlop={8}
+            >
+              {({ pressed }) => (
+                <ThemedText
+                  weight="semiBold"
+                  size={typography.rowTitle}
+                  color={pressed ? colors.accent : colors.textPrimary}
+                >
+                  {tr('retry')}
+                </ThemedText>
+              )}
+            </Pressable>
+          </View>
+        )}
+
+        {enoughRatings && state.status === 'done' && (
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {results.length === 0 ? (
+              <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
+                {tr('noRecs')}
+              </ThemedText>
+            ) : (
+              <View style={[styles.grid, { width: gridWidth, columnGap: gridColumnGap }]}>
+                {results.map(({ manga }) => (
+                  <MangaCard
+                    key={manga.id}
+                    manga={manga}
+                    reason={reasonOf(manga)}
+                    width={compactWidth}
+                    onPress={() => setStack([[manga.id]])}
+                  />
+                ))}
+              </View>
+            )}
+            <Pressable
+              onPress={() => navigation.navigate('search' as never)}
+              style={({ pressed }) => [styles.browseMore, pressed && styles.browseMorePressed]}
+            >
+              <ThemedText weight="medium" size={typography.label} color={colors.accent}>
+                {tr('browseMore')}
+              </ThemedText>
+            </Pressable>
+          </ScrollView>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -195,14 +212,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  // Single centered/capped column (matches Search/Recommendations). Centering
+  // lives here, NOT on the ScrollView contentContainer, which clipped row
+  // content on narrow native viewports.
+  container: {
     ...centeredContent,
+    flex: 1,
+  },
+  header: {
     marginTop: spacing.xl,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.xl,
   },
   empty: {
-    ...centeredContent,
     marginTop: spacing.xxl,
     textAlign: 'center',
     paddingHorizontal: spacing.xl,
@@ -217,13 +239,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   scrollContent: {
-    ...centeredContent,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.lg,
+    alignSelf: 'center', // center the fixed-width grid block, symmetric margins
+    rowGap: spacing.lg,
+  },
+  browseMore: {
+    alignSelf: 'center',
+    marginTop: spacing.xl,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  browseMorePressed: {
+    backgroundColor: colors.card,
   },
 });

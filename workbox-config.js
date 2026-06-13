@@ -14,8 +14,9 @@ module.exports = {
     // Build metadata is irrelevant to the runtime shell.
     'metadata.json',
     // @expo/vector-icons ships ~18 icon-font families (~3.5MB); the app only
-    // uses Ionicons, so precache that one and skip the rest.
-    'assets/node_modules/@expo/vector-icons/**/Fonts/!(Ionicons*).ttf',
+    // uses Ionicons (UI/heart) and Octicons (rating star), so precache those
+    // two and skip the rest.
+    'assets/node_modules/@expo/vector-icons/**/Fonts/!(Ionicons*|Octicons*).ttf',
   ],
   swDest: 'dist/sw.js',
   // A new service worker activates and claims clients immediately, so a fresh
