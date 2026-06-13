@@ -162,6 +162,36 @@ const STRINGS = {
   a11yFavorite: { en: 'Favorite', ko: '즐겨찾기', ja: 'お気に入り' },
   a11yRating: { en: 'Rating', ko: '별점', ja: '評価' },
   a11ySelect: { en: 'Select', ko: '선택', ja: '選択' },
+  // Library rating filter
+  ratingFilterAll: { en: 'All', ko: '전체', ja: 'すべて' },
+  ratingThresholdSuffix: { en: '+', ko: ' 이상', ja: '以上' },
+  ratedFilterEmpty: {
+    en: 'No manga at this rating or higher',
+    ko: '이 별점 이상의 작품이 없어요',
+    ja: 'この評価以上の作品がありません',
+  },
+  // Search feedback form
+  feedbackOpen: { en: 'Send feedback', ko: '한마디 건네기', ja: 'ひとことを送る' },
+  feedbackPrompt: {
+    en: "Tell us about manga that won't show up, or any bugs.",
+    ko: '검색되지 않는 만화나 버그가 있다면 알려주세요.',
+    ja: '検索できない漫画やバグがあれば教えてください',
+  },
+  feedbackMessagePlaceholder: { en: 'Your message', ko: '내용을 입력하세요', ja: 'メッセージを入力' },
+  feedbackEmailPlaceholder: { en: 'Email (optional)', ko: '이메일 (선택)', ja: 'メール (任意)' },
+  feedbackSend: { en: 'Send', ko: '보내기', ja: '送信' },
+  feedbackSending: { en: 'Sending…', ko: '보내는 중…', ja: '送信中…' },
+  feedbackSuccess: {
+    en: 'Thanks for your feedback!',
+    ko: '보내주셔서 고마워요!',
+    ja: 'フィードバックありがとうございます',
+  },
+  feedbackError: {
+    en: "Couldn't send. Please try again.",
+    ko: '보내지 못했어요. 다시 시도해 주세요.',
+    ja: '送信できませんでした もう一度お試しください',
+  },
+  feedbackNotReady: { en: 'Coming soon', ko: '준비 중', ja: '準備中' },
 } satisfies Record<string, Localized>;
 
 export type StringKey = keyof typeof STRINGS;

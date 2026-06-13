@@ -4,6 +4,8 @@ import {
   FlatList,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -12,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { errorKindOf, searchManga, type AniListErrorKind, type Manga } from '../api/anilist';
 import { FavoriteStar } from '../components/FavoriteStar';
+import { FeedbackForm, useFeedbackController } from '../components/FeedbackForm';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemedText } from '../components/ThemedText';
 import { genreLabel, type StringKey } from '../i18n/i18n';
@@ -53,6 +56,9 @@ export function SearchScreen({
   onGetRecommendations,
 }: SearchScreenProps) {
   const tr = useT();
+  // Shared feedback state so the form survives moving between the results-list
+  // footer and the bottom-anchored area.
+  const feedback = useFeedbackController();
   const [query, setQuery] = useState('');
   const [state, setState] = useState<SearchState>({ status: 'idle' });
 
@@ -167,7 +173,24 @@ export function SearchScreen({
               onToggleSelect={() => onToggleSelection(item)}
             />
           )}
+          // Feedback sits below the results, scrolling into view at the end.
+          ListFooterComponent={
+            <View style={styles.feedbackFooter}>
+              <FeedbackForm controller={feedback} />
+            </View>
+          }
         />
+      )}
+
+      {/* Non-results states: pin the feedback entry to the bottom, lifting above
+          the soft keyboard on native when the inputs are focused. */}
+      {!(state.status === 'done' && state.results.length > 0) && (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.feedbackArea}
+        >
+          <FeedbackForm controller={feedback} />
+        </KeyboardAvoidingView>
       )}
     </View>
   );
@@ -322,6 +345,17 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
     gap: spacing.md,
+  },
+  // Below the results list (scrolls into view at the end).
+  feedbackFooter: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.xxl,
+  },
+  // Non-results states: pushed to the bottom of the flex column.
+  feedbackArea: {
+    marginTop: 'auto',
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   selectionBar: {
     marginTop: spacing.md,

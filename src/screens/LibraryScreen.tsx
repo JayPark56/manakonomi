@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Slider from '@react-native-community/slider';
+import { Octicons } from '@expo/vector-icons';
 import type { Manga } from '../api/anilist';
 import { useAuth } from '../auth/AuthContext';
 import { FavoriteStar } from '../components/FavoriteStar';
@@ -29,21 +31,45 @@ interface LibraryItem {
   entry: SavedManga;
 }
 
+interface LibrarySection {
+  id: 'favorites' | 'rated';
+  title: string;
+  data: LibraryItem[];
+  /** Rated section only: true when the rating filter hid every item. */
+  emptyByFilter?: boolean;
+}
+
 export function LibraryScreen() {
   const tr = useT();
   const { data } = useUserData();
+  // Minimum-rating filter for the Rated section (0 = show all), in 0.5 steps.
+  const [minRating, setMinRating] = useState(0);
 
   const items = Object.entries(data).map(([id, entry]) => ({ manga: toManga(id, entry), entry }));
   const favorites = items
     .filter((it) => it.entry.favorite)
     .sort((a, b) => b.entry.savedAt - a.entry.savedAt);
-  const rated = items
+  const ratedAll = items
     .filter((it) => it.entry.rating != null)
     .sort((a, b) => (b.entry.rating ?? 0) - (a.entry.rating ?? 0));
+  const ratedFiltered = ratedAll.filter((it) => (it.entry.rating ?? 0) >= minRating);
 
-  const sections = [
-    ...(favorites.length > 0 ? [{ title: tr('libFavorites'), data: favorites }] : []),
-    ...(rated.length > 0 ? [{ title: tr('libRated'), data: rated }] : []),
+  const sections: LibrarySection[] = [
+    ...(favorites.length > 0
+      ? [{ id: 'favorites' as const, title: tr('libFavorites'), data: favorites }]
+      : []),
+    // Keep the Rated section (and its slider) whenever any rating exists, even
+    // if the filter currently hides them all.
+    ...(ratedAll.length > 0
+      ? [
+          {
+            id: 'rated' as const,
+            title: tr('libRated'),
+            data: ratedFiltered,
+            emptyByFilter: ratedFiltered.length === 0,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -64,15 +90,69 @@ export function LibraryScreen() {
             stickySectionHeadersEnabled={false}
             contentContainerStyle={styles.listContent}
             renderSectionHeader={({ section }) => (
-              <ThemedText weight="bold" size={typography.section} style={styles.sectionHeader}>
-                {section.title}
-              </ThemedText>
+              <View style={styles.sectionHeader}>
+                <ThemedText weight="bold" size={typography.section}>
+                  {section.title}
+                </ThemedText>
+                {section.id === 'rated' && (
+                  <RatedFilter value={minRating} onChange={setMinRating} />
+                )}
+              </View>
             )}
+            renderSectionFooter={({ section }) =>
+              section.id === 'rated' && section.emptyByFilter ? (
+                <ThemedText
+                  weight="medium"
+                  size={typography.label}
+                  color={colors.textSecondary}
+                  style={styles.filterEmpty}
+                >
+                  {tr('ratedFilterEmpty')}
+                </ThemedText>
+              ) : null
+            }
             renderItem={({ item }) => <LibraryRow item={item} />}
           />
         )}
       </View>
     </SafeAreaView>
+  );
+}
+
+/** Minimum-rating slider (0–5, 0.5 steps) for the Rated section. */
+function RatedFilter({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const tr = useT();
+  return (
+    <View style={styles.filterRow}>
+      <Slider
+        style={styles.slider}
+        minimumValue={0}
+        maximumValue={5}
+        step={0.5}
+        value={value}
+        onValueChange={onChange}
+        minimumTrackTintColor={colors.accent}
+        maximumTrackTintColor={colors.textPlaceholder}
+        thumbTintColor={colors.accent}
+      />
+      <View style={styles.thresholdLabel}>
+        {value <= 0 ? (
+          <ThemedText weight="semiBold" size={typography.caption} color={colors.textSecondary}>
+            {tr('ratingFilterAll')}
+          </ThemedText>
+        ) : (
+          <>
+            <ThemedText weight="semiBold" size={typography.caption} color={colors.textPrimary}>
+              {value}
+            </ThemedText>
+            <Octicons name="star-fill" size={12} color={colors.accent} />
+            <ThemedText weight="semiBold" size={typography.caption} color={colors.textPrimary}>
+              {tr('ratingThresholdSuffix')}
+            </ThemedText>
+          </>
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -237,6 +317,28 @@ const styles = StyleSheet.create({
   sectionHeader: {
     marginTop: spacing.xl,
     marginBottom: spacing.md,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  slider: {
+    flex: 1,
+    height: 36,
+  },
+  // Fixed width so the slider track doesn't reflow as the number's width changes.
+  thresholdLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 3,
+    minWidth: 58,
+  },
+  filterEmpty: {
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
   },
   row: {
     flexDirection: 'row',
