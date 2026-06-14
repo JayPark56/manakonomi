@@ -37,3 +37,30 @@ export async function writeApiCache<T>(key: string, data: T): Promise<void> {
     /* best-effort; ignore quota / serialization failures */
   }
 }
+
+/**
+ * TTL-aware cache (used by the TCG client): static set/card data is cached hard
+ * while prices use a shorter max-age. Pass maxAgeMs = Infinity to read a stale
+ * entry of any age (the offline fallback after a failed fetch).
+ */
+const TTL_PREFIX = 'manakonomi:ttlcache:';
+
+export async function readCachedWithTTL<T>(key: string, maxAgeMs: number): Promise<T | null> {
+  try {
+    const raw = await AsyncStorage.getItem(TTL_PREFIX + key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { data: T; ts: number };
+    if (maxAgeMs !== Infinity && Date.now() - parsed.ts > maxAgeMs) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function writeCachedWithTTL<T>(key: string, data: T): Promise<void> {
+  try {
+    await AsyncStorage.setItem(TTL_PREFIX + key, JSON.stringify({ data, ts: Date.now() }));
+  } catch {
+    /* best-effort */
+  }
+}

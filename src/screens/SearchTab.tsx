@@ -2,9 +2,14 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Manga } from '../api/anilist';
+import type { TcgCard } from '../tcg/optcgApi';
 import { SearchScreen } from './SearchScreen';
 import { RecommendationsScreen } from './RecommendationsScreen';
+import { TcgCardListScreen } from './TcgCardListScreen';
+import { TcgCardDetailScreen } from './TcgCardDetailScreen';
 import { colors } from '../theme';
+
+type TcgNav = { view: 'list' } | { view: 'detail'; card: TcgCard };
 
 /**
  * Search flow: search (with a multi-select set) → recommendations with a
@@ -14,6 +19,8 @@ import { colors } from '../theme';
 export function SearchTab() {
   const [stack, setStack] = useState<number[][]>([]);
   const [selection, setSelection] = useState<Manga[]>([]);
+  // Card-game browser overlay, opened from a linked manga's recommendations.
+  const [tcg, setTcg] = useState<TcgNav | null>(null);
   const current = stack.length > 0 ? stack[stack.length - 1] : null;
 
   const toggleSelection = (manga: Manga) => {
@@ -38,14 +45,27 @@ export function SearchTab() {
           }}
         />
       </View>
-      {current != null && (
+      {current != null && tcg == null && (
         <View style={styles.screen}>
           <RecommendationsScreen
             key={current.join(',')}
             mangaIds={current}
             onSelectRecommendation={(manga) => setStack((prev) => [...prev, [manga.id]])}
             onBack={() => setStack((prev) => prev.slice(0, -1))}
+            onOpenTcg={() => setTcg({ view: 'list' })}
           />
+        </View>
+      )}
+      {tcg != null && (
+        <View style={styles.screen}>
+          {tcg.view === 'list' ? (
+            <TcgCardListScreen
+              onBack={() => setTcg(null)}
+              onSelectCard={(card) => setTcg({ view: 'detail', card })}
+            />
+          ) : (
+            <TcgCardDetailScreen card={tcg.card} onBack={() => setTcg({ view: 'list' })} />
+          )}
         </View>
       )}
     </SafeAreaView>

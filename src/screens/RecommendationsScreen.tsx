@@ -22,6 +22,7 @@ import {
 } from '../lib/taste';
 import { useGridLayout, centeredContent } from '../lib/layout';
 import { displayTitle } from '../lib/titles';
+import { anyCardGame } from '../tcg/mangaCardGames';
 import { useUserData } from '../user/UserDataContext';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -36,6 +37,8 @@ interface RecommendationsScreenProps {
   mangaIds: number[];
   onSelectRecommendation: (manga: Manga) => void;
   onBack: () => void;
+  /** Opens the linked card-game browser (shown only when a source links one). */
+  onOpenTcg?: () => void;
 }
 
 interface LoadedData {
@@ -52,6 +55,7 @@ export function RecommendationsScreen({
   mangaIds,
   onSelectRecommendation,
   onBack,
+  onOpenTcg,
 }: RecommendationsScreenProps) {
   const tr = useT();
   const { lang } = useLanguage();
@@ -135,6 +139,7 @@ export function RecommendationsScreen({
           profile={profile}
           lang={lang}
           onSelect={onSelectRecommendation}
+          onOpenTcg={onOpenTcg}
         />
       )}
     </View>
@@ -147,16 +152,19 @@ function RecommendationsContent({
   profile,
   lang,
   onSelect,
+  onOpenTcg,
 }: {
   data: LoadedData;
   combined: boolean;
   profile: ReturnType<typeof buildTasteProfile>;
   lang: ReturnType<typeof useLanguage>['lang'];
   onSelect: (manga: Manga) => void;
+  onOpenTcg?: () => void;
 }) {
   const tr = useT();
   const { cardWidth } = useGridLayout();
   const { sources, candidates } = data;
+  const showTcg = onOpenTcg != null && anyCardGame(sources);
 
   // Reasons compare against the single source, or the shared taste of the set.
   const reasonSource = combined ? sharedTasteOf(sources) : sources[0];
@@ -172,6 +180,17 @@ function RecommendationsContent({
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       {combined ? <PicksHeader sources={sources} /> : <SourceHeader source={sources[0]} />}
+
+      {showTcg && (
+        <Pressable
+          onPress={onOpenTcg}
+          style={({ pressed }) => [styles.tcgEntry, pressed && styles.tcgEntryPressed]}
+        >
+          <ThemedText weight="bold" size={typography.label} color={colors.onAccent}>
+            {tr('tcgEntry')}
+          </ThemedText>
+        </Pressable>
+      )}
 
       {candidates.length === 0 ? (
         <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
@@ -298,6 +317,16 @@ const styles = StyleSheet.create({
     // container already caps + centers the screen; just pad the content here.
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
+  },
+  tcgEntry: {
+    backgroundColor: colors.accent,
+    borderRadius: radius,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  tcgEntryPressed: {
+    opacity: 0.85,
   },
   sourceHeader: {
     flexDirection: 'row',

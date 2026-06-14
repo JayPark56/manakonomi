@@ -192,6 +192,19 @@ const STRINGS = {
     ja: '送信できませんでした もう一度お試しください',
   },
   feedbackNotReady: { en: 'Coming soon', ko: '준비 중', ja: '準備中' },
+  // One Piece TCG browser
+  tcgEntry: {
+    en: 'View One Piece TCG cards',
+    ko: '원피스 카드게임 보기',
+    ja: 'ONE PIECEカードを見る',
+  },
+  tcgTitle: { en: 'One Piece TCG', ko: '원피스 카드게임', ja: 'ONE PIECEカードゲーム' },
+  tcgEmpty: { en: 'No cards in this set', ko: '이 세트에 카드가 없어요', ja: 'このセットにカードがありません' },
+  tcgMarketPrice: { en: 'Market price', ko: '시세', ja: '相場価格' },
+  tcgPriceFrom: { en: 'Prices from TCGPlayer', ko: 'TCGPlayer 시세 기준', ja: '価格はTCGPlayer提供' },
+  tcgSetLabel: { en: 'Set', ko: '세트', ja: 'セット' },
+  tcgTypeLabel: { en: 'Type', ko: '종류', ja: 'タイプ' },
+  tcgRarityLabel: { en: 'Rarity', ko: '레어도', ja: 'レアリティ' },
 } satisfies Record<string, Localized>;
 
 export type StringKey = keyof typeof STRINGS;
