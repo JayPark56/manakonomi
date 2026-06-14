@@ -70,7 +70,9 @@ function AppNavigator() {
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: {
-            backgroundColor: colors.card,
+            // Black (not card) so the bar and the bottom safe-area inset it fills
+            // are edge-to-edge dark — no white strip over the home indicator.
+            backgroundColor: colors.background,
             borderTopWidth: 0,
           },
           tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: typography.tab },
@@ -216,5 +218,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  // Black root so the bottom safe-area under the tab bar is never white.
+  flex: { flex: 1, backgroundColor: colors.background },
 });

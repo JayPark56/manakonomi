@@ -22,7 +22,7 @@
     "web": {
       "favicon": "./assets/icons/favicon-32.png",
       "name": "Manakonomi",
-      "themeColor": "#FFD60A",
+      "themeColor": "#000000",
       "backgroundColor": "#000000",
       "display": "standalone"
     },

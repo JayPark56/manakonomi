@@ -27,6 +27,9 @@
       html,
       body {
         height: 100%;
+        /* Black everywhere so the bottom safe-area (home indicator) and any
+           overscroll never flash the default white in the installed PWA. */
+        background-color: #000000;
       }
       body {
         overflow: hidden;
@@ -35,6 +38,7 @@
         display: flex;
         height: 100%;
         flex: 1;
+        background-color: #000000;
       }
     </style>
   </head>
