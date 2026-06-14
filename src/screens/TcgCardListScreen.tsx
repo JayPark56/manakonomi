@@ -8,6 +8,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { CardCollectionHeart } from '../cards/CardCollectionHeart';
 import { ThemedText } from '../components/ThemedText';
 import { type StringKey } from '../i18n/i18n';
 import { useT } from '../i18n/LanguageContext';
@@ -284,6 +285,10 @@ function TcgCardTile({
       ) : (
         <View style={[styles.cardImage, styles.cardImageEmpty]} />
       )}
+      {/* Nested Pressable captures its own taps → no navigation into the card. */}
+      <View style={styles.tileHeart}>
+        <CardCollectionHeart card={card} size={18} onCover />
+      </View>
       <View style={styles.tileBody}>
         <ThemedText weight="semiBold" size={typography.cardTitle} numberOfLines={1}>
           {card.name}
@@ -384,6 +389,11 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 5 / 7, // standard OPTCG card ratio
     backgroundColor: colors.background,
+  },
+  tileHeart: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
   },
   cardImageEmpty: {
     opacity: 0.4,

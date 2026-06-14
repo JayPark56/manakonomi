@@ -180,7 +180,8 @@ const STRINGS = {
     ja: '検索できない漫画やバグがあれば教えてください',
   },
   feedbackMessagePlaceholder: { en: 'Your message', ko: '내용을 입력하세요', ja: 'メッセージを入力' },
-  feedbackEmailPlaceholder: { en: 'Email (optional)', ko: '이메일 (선택)', ja: 'メール (任意)' },
+  feedbackNicknamePlaceholder: { en: 'Nickname (optional)', ko: '닉네임 (선택)', ja: 'ニックネーム (任意)' },
+  a11yClose: { en: 'Close', ko: '닫기', ja: '閉じる' },
   feedbackSend: { en: 'Send', ko: '보내기', ja: '送信' },
   feedbackSending: { en: 'Sending…', ko: '보내는 중…', ja: '送信中…' },
   feedbackSuccess: {
@@ -245,6 +246,15 @@ const STRINGS = {
     ja: 'ログインすれば 評価とハートがすべての端末で同期されます',
   },
   a11yHelp: { en: 'How it works', ko: '사용법', ja: '使い方' },
+  // Card collection
+  a11yCollect: { en: 'Collect card', ko: '카드 수집', ja: 'カードを集める' },
+  cardCollectionEntry: { en: 'My Card Collection', ko: '내 카드 컬렉션', ja: 'マイカードコレクション' },
+  cardCollectionTotal: { en: 'Total value:', ko: '총 가치:', ja: '合計:' },
+  cardCollectionEmpty: {
+    en: 'No cards collected yet. Tap the heart on a card to add it.',
+    ko: '아직 모은 카드가 없어요. 카드의 하트를 눌러 담아보세요.',
+    ja: 'まだ集めたカードがありません カードのハートを押して追加しましょう',
+  },
 } satisfies Record<string, Localized>;
 
 export type StringKey = keyof typeof STRINGS;

@@ -13,12 +13,13 @@ export interface FeedbackController {
   setOpen: (v: boolean) => void;
   message: string;
   setMessage: (v: string) => void;
-  email: string;
-  setEmail: (v: string) => void;
+  nickname: string;
+  setNickname: (v: string) => void;
   status: Status;
   configured: boolean;
   canSend: boolean;
   send: () => void;
+  close: () => void;
 }
 
 /**
@@ -29,25 +30,39 @@ export interface FeedbackController {
 export function useFeedbackController(): FeedbackController {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [email, setEmail] = useState('');
+  const [nickname, setNickname] = useState('');
   const [status, setStatus] = useState<Status>('idle');
 
   const configured = isEmailjsConfigured();
   const canSend = configured && status !== 'sending' && message.trim().length > 0;
 
+  const close = useCallback(() => {
+    setOpen(false);
+    setMessage('');
+    setNickname('');
+    setStatus('idle');
+  }, []);
+
   const send = useCallback(() => {
     if (!(configured && status !== 'sending' && message.trim().length > 0)) return;
     setStatus('sending');
-    // Param names must match the EmailJS template variables: {{message}} / {{user_email}}.
-    const params = { message: message.trim(), user_email: email.trim() };
+    // Param names must match the EmailJS template variables: {{message}} / {{nickname}}.
+    const params = { message: message.trim(), nickname: nickname.trim() };
+    console.log(
+      '[feedback] sending via EmailJS',
+      { serviceId: emailjsConfig.serviceId, templateId: emailjsConfig.templateId },
+      'params:',
+      params,
+    );
     void (async () => {
       try {
         if (Platform.OS === 'web') {
           // @emailjs/browser is browser-targeted; lazy-imported off the startup path.
           const emailjs = (await import('@emailjs/browser')).default;
-          await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, params, {
+          const res = await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, params, {
             publicKey: emailjsConfig.publicKey,
           });
+          console.log('[feedback] EmailJS send ok:', res.status, res.text);
         } else {
           // On native the SDK reads browser-only globals (location.pathname), so
           // POST to the EmailJS REST API directly instead.
@@ -61,30 +76,62 @@ export function useFeedbackController(): FeedbackController {
               template_params: params,
             }),
           });
-          if (!res.ok) throw new Error(`EmailJS HTTP ${res.status}`);
+          const body = await res.text();
+          if (!res.ok) throw new Error(`EmailJS HTTP ${res.status}: ${body}`);
+          console.log('[feedback] EmailJS REST ok:', body);
         }
         setStatus('success');
         setMessage('');
-        setEmail('');
+        setNickname('');
       } catch (err) {
-        console.warn('[feedback] send failed:', err);
+        // EmailJS errors are { status, text } objects, not Error instances —
+        // surface the real reason (e.g. 412 Gmail scope) so failures aren't silent.
+        const detail =
+          err && typeof err === 'object' && 'text' in err
+            ? `${(err as { status?: number }).status ?? '?'} ${(err as { text?: string }).text ?? ''}`
+            : String(err);
+        console.warn('[feedback] send failed:', detail, err);
         setStatus('error'); // message kept so it isn't lost
       }
     })();
-  }, [configured, status, message, email]);
+  }, [configured, status, message, nickname]);
 
-  return { open, setOpen, message, setMessage, email, setEmail, status, configured, canSend, send };
+  return {
+    open,
+    setOpen,
+    message,
+    setMessage,
+    nickname,
+    setNickname,
+    status,
+    configured,
+    canSend,
+    send,
+    close,
+  };
 }
 
 /**
  * Bottom-of-Search feedback entry: a subtle button that expands into a small
- * EmailJS-backed form. Degrades gracefully when EmailJS is unconfigured (send
- * disabled + a "coming soon" note). State lives in the passed controller.
+ * EmailJS-backed form with a close (X). Degrades gracefully when EmailJS is
+ * unconfigured (send disabled + a "coming soon" note). State lives in the
+ * passed controller.
  */
 export function FeedbackForm({ controller }: { controller: FeedbackController }) {
   const tr = useT();
-  const { open, setOpen, message, setMessage, email, setEmail, status, configured, canSend, send } =
-    controller;
+  const {
+    open,
+    setOpen,
+    message,
+    setMessage,
+    nickname,
+    setNickname,
+    status,
+    configured,
+    canSend,
+    send,
+    close,
+  } = controller;
 
   if (!open) {
     return (
@@ -102,9 +149,22 @@ export function FeedbackForm({ controller }: { controller: FeedbackController })
 
   return (
     <View style={styles.form}>
-      <ThemedText weight="medium" size={typography.caption} color={colors.textSecondary}>
-        {tr('feedbackPrompt')}
-      </ThemedText>
+      <View style={styles.formHeader}>
+        <ThemedText weight="medium" size={typography.caption} color={colors.textSecondary} style={styles.prompt}>
+          {tr('feedbackPrompt')}
+        </ThemedText>
+        <Pressable
+          onPress={close}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11yClose')}
+          testID="feedback-close"
+        >
+          {({ pressed }) => (
+            <Ionicons name="close" size={22} color={pressed ? colors.accent : colors.textSecondary} />
+          )}
+        </Pressable>
+      </View>
 
       <TextInput
         style={[styles.input, styles.messageInput]}
@@ -117,12 +177,11 @@ export function FeedbackForm({ controller }: { controller: FeedbackController })
       />
       <TextInput
         style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder={tr('feedbackEmailPlaceholder')}
+        value={nickname}
+        onChangeText={setNickname}
+        placeholder={tr('feedbackNicknamePlaceholder')}
         placeholderTextColor={colors.textPlaceholder}
         autoCapitalize="none"
-        keyboardType="email-address"
         autoCorrect={false}
       />
 
@@ -179,6 +238,15 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.sm,
+  },
+  formHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  prompt: {
+    flex: 1,
   },
   input: {
     backgroundColor: colors.card,

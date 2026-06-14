@@ -16,13 +16,13 @@
  *   PUBLIC_KEY  → Account → General → "Public Key"
  *
  * The template should reference the variables this app sends: {{message}} and
- * {{email}} (the optional reply-to address).
+ * {{nickname}} (the optional nickname).
  * ────────────────────────────────────────────────────────────────────────────
  */
 
 // EXPO_PUBLIC_EMAILJS_* env vars still take precedence; these are the committed
 // fallback defaults. The template expects params named {{message}} and
-// {{user_email}} (see FeedbackForm's send).
+// {{nickname}} (see FeedbackForm's send).
 export const emailjsConfig = {
   serviceId: process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID ?? 'service_vat07sk',
   templateId: process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID ?? 'template_4z0etfa',

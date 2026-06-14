@@ -11,12 +11,14 @@ import { LanguageProvider, useT } from './src/i18n/LanguageContext';
 import { UserDataProvider } from './src/user/UserDataContext';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { SyncManager } from './src/sync/SyncManager';
+import { CardSyncManager } from './src/sync/CardSyncManager';
 import {
   getOnboardingCompleted,
   setAuthMode,
   setOnboardingCompleted,
   type AuthMode,
 } from './src/auth/authStorage';
+import { CardCollectionProvider } from './src/cards/CardCollectionContext';
 import { IntroProvider, useIntro } from './src/intro/IntroContext';
 import { IntroOverlay } from './src/intro/IntroOverlay';
 import { getIntroCompleted } from './src/intro/introStorage';
@@ -195,11 +197,14 @@ export default function App() {
       <LanguageProvider>
         <AuthProvider>
           <UserDataProvider>
-            <IntroProvider>
-              <StatusBar style="light" />
-              <SyncManager />
-              <AppGate />
-            </IntroProvider>
+            <CardCollectionProvider>
+              <IntroProvider>
+                <StatusBar style="light" />
+                <SyncManager />
+                <CardSyncManager />
+                <AppGate />
+              </IntroProvider>
+            </CardCollectionProvider>
           </UserDataProvider>
         </AuthProvider>
       </LanguageProvider>

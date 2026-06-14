@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
-import { Octicons } from '@expo/vector-icons';
+import { Ionicons, Octicons } from '@expo/vector-icons';
 import type { Manga } from '../api/anilist';
 import { useAuth } from '../auth/AuthContext';
 import { FavoriteStar } from '../components/FavoriteStar';
@@ -12,8 +12,13 @@ import { useT } from '../i18n/LanguageContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { displayTitle, secondaryTitle } from '../lib/titles';
 import { useUserData, type SavedManga } from '../user/UserDataContext';
+import { type CollectedCard } from '../cards/CardCollectionContext';
+import { CardCollectionScreen } from './CardCollectionScreen';
+import { TcgCardDetailScreen } from './TcgCardDetailScreen';
 import { centeredContent } from '../lib/layout';
 import { colors, radius, spacing, typography } from '../theme';
+
+type CardNav = { view: 'list' } | { view: 'detail'; card: CollectedCard };
 
 /** A SavedManga entry rebuilt into the Manga shape the components expect. */
 function toManga(id: string, entry: SavedManga): Manga {
@@ -44,6 +49,23 @@ export function LibraryScreen() {
   const { data } = useUserData();
   // Minimum-rating filter for the Rated section (0 = show all), in 0.5 steps.
   const [minRating, setMinRating] = useState(0);
+  // Card-collection sub-navigation overlay (list ↔ detail).
+  const [cardNav, setCardNav] = useState<CardNav | null>(null);
+
+  if (cardNav) {
+    return (
+      <SafeAreaView style={styles.root} edges={['top']}>
+        {cardNav.view === 'list' ? (
+          <CardCollectionScreen
+            onBack={() => setCardNav(null)}
+            onSelectCard={(card) => setCardNav({ view: 'detail', card })}
+          />
+        ) : (
+          <TcgCardDetailScreen card={cardNav.card} onBack={() => setCardNav({ view: 'list' })} />
+        )}
+      </SafeAreaView>
+    );
+  }
 
   const items = Object.entries(data).map(([id, entry]) => ({ manga: toManga(id, entry), entry }));
   const favorites = items
@@ -79,6 +101,16 @@ export function LibraryScreen() {
           {tr('tabLibrary')}
         </ThemedText>
         <AuthStatusRow />
+        <Pressable
+          onPress={() => setCardNav({ view: 'list' })}
+          style={({ pressed }) => [styles.collectionEntry, pressed && styles.collectionEntryPressed]}
+        >
+          <Ionicons name="albums-outline" size={20} color={colors.accent} />
+          <ThemedText weight="semiBold" size={typography.label} style={styles.collectionEntryLabel}>
+            {tr('cardCollectionEntry')}
+          </ThemedText>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </Pressable>
         {sections.length === 0 ? (
           <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.empty}>
             {tr('libraryEmpty')}
@@ -301,6 +333,23 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.sm,
     gap: spacing.sm,
+  },
+  collectionEntry: {
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: radius,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  collectionEntryPressed: {
+    opacity: 0.7,
+  },
+  collectionEntryLabel: {
+    flex: 1, // pushes the chevron to the right edge; truncates if needed
   },
   notePressed: {
     opacity: 0.6,

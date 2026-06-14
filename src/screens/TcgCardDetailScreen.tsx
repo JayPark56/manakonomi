@@ -1,4 +1,5 @@
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { CardCollectionHeart } from '../cards/CardCollectionHeart';
 import { ThemedText } from '../components/ThemedText';
 import { useT } from '../i18n/LanguageContext';
 import { formatPrice, type TcgCard } from '../tcg/optcgApi';
@@ -11,8 +12,9 @@ export function TcgCardDetailScreen({
 }: {
   card: TcgCard;
   onBack: () => void;
-  /** Opens the card list filtered to this card's set. */
-  onViewSet: (setId: string) => void;
+  /** Opens the card list filtered to this card's set. Omitted when reached from
+   *  the collection view (which has no set browser to return to). */
+  onViewSet?: (setId: string) => void;
 }) {
   const tr = useT();
 
@@ -33,9 +35,12 @@ export function TcgCardDetailScreen({
           <View style={[styles.image, styles.imageEmpty]} />
         )}
 
-        <ThemedText weight="bold" size={typography.source} style={styles.name}>
-          {card.name}
-        </ThemedText>
+        <View style={styles.nameRow}>
+          <ThemedText weight="bold" size={typography.source} style={styles.name}>
+            {card.name}
+          </ThemedText>
+          <CardCollectionHeart card={card} size={26} />
+        </View>
         <ThemedText weight="medium" size={typography.caption} color={colors.textSecondary} style={styles.cardId}>
           {card.id}
         </ThemedText>
@@ -64,7 +69,7 @@ export function TcgCardDetailScreen({
           </ThemedText>
         </View>
 
-        {card.setId.length > 0 && (
+        {onViewSet != null && card.setId.length > 0 && (
           <Pressable
             onPress={() => onViewSet(card.setId)}
             style={({ pressed }) => [styles.viewSet, pressed && styles.viewSetPressed]}
@@ -121,9 +126,15 @@ const styles = StyleSheet.create({
   imageEmpty: {
     opacity: 0.4,
   },
-  name: {
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
     marginTop: spacing.lg,
-    textAlign: 'center',
+    alignSelf: 'stretch',
+  },
+  name: {
+    flexShrink: 1,
   },
   cardId: {
     marginTop: spacing.xs,
