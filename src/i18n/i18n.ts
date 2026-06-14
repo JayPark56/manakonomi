@@ -73,6 +73,8 @@ const STRINGS = {
     ko: '예: 원피스, 체인소맨, 슬램덩크',
     ja: '例: ワンピース・チェンソーマン・ベルセルク',
   },
+  // Prefix for the rotating example titles, e.g. "e.g. A, B, C".
+  searchHintPrefix: { en: 'e.g.', ko: '예:', ja: '例:' },
   emptySearch: {
     en: 'No results\nTry the English or Japanese title',
     ko: '검색 결과가 없어요\n영어나 일본어 제목으로도 검색해 보세요',
@@ -205,6 +207,44 @@ const STRINGS = {
   tcgSetLabel: { en: 'Set', ko: '세트', ja: 'セット' },
   tcgTypeLabel: { en: 'Type', ko: '종류', ja: 'タイプ' },
   tcgRarityLabel: { en: 'Rarity', ko: '레어도', ja: 'レアリティ' },
+  tcgSortDefault: { en: 'Default', ko: '기본', ja: '標準' },
+  tcgSortPrice: { en: 'Price ↓', ko: '비싼 순', ja: '高い順' },
+  tcgViewSet: { en: 'View this set', ko: '이 세트 전체 보기', ja: 'このセットを見る' },
+  // Intro / how-to coach cards
+  introNext: { en: 'Next', ko: '다음', ja: '次へ' },
+  introDone: { en: 'Done', ko: '시작하기', ja: 'はじめる' },
+  introSkip: { en: 'Skip', ko: '건너뛰기', ja: 'スキップ' },
+  intro1Title: { en: 'Search a manga you loved', ko: '재밌게 본 만화를 검색하세요', ja: '好きな漫画を検索' },
+  intro1Desc: {
+    en: "Find one you like and we'll surface similar titles.",
+    ko: '좋아하는 작품을 검색하면 비슷한 만화를 찾아드려요.',
+    ja: '好きな作品を検索すると 似た漫画を見つけます',
+  },
+  intro2Title: { en: 'Combine your tastes', ko: '여러 취향을 한 번에', ja: '好みをまとめて' },
+  intro2Desc: {
+    en: 'Use the + button to pick several titles and blend them into one set of recommendations.',
+    ko: '+ 버튼으로 여러 작품을 골라 취향을 합쳐서 추천받을 수 있어요.',
+    ja: '+ ボタンで複数の作品を選び 好みを合わせておすすめを受け取れます',
+  },
+  intro3Title: { en: 'Heart vs. rating', ko: '하트와 별점은 달라요', ja: 'ハートと評価の違い' },
+  intro3Desc: {
+    en: 'The heart saves manga you want to read or are curious about. It does not affect recommendations.',
+    ko: '하트는 보고 싶거나 관심 있는 작품을 저장해요. 추천에는 영향을 주지 않아요.',
+    ja: 'ハートは気になる・読みたい作品を保存します おすすめには影響しません',
+  },
+  intro4Title: { en: "Rate what you've read", ko: '별점은 이미 본 작품 평가예요', ja: '評価でおすすめが進化' },
+  intro4Desc: {
+    en: 'Rate manga you have already read, and that taste shapes your For You tab.',
+    ko: "이미 본 작품에 별점을 남기면 그 취향이 '추천' 탭에 반영돼요.",
+    ja: '読んだ作品を評価すると その好みが「おすすめ」タブに反映されます',
+  },
+  intro5Title: { en: 'Sign in to sync', ko: '로그인하면 모든 기기에서', ja: 'ログインで同期' },
+  intro5Desc: {
+    en: 'Sign in and your ratings and hearts follow you across devices.',
+    ko: '로그인하면 별점과 하트가 모든 기기에서 이어져요.',
+    ja: 'ログインすれば 評価とハートがすべての端末で同期されます',
+  },
+  a11yHelp: { en: 'How it works', ko: '사용법', ja: '使い方' },
 } satisfies Record<string, Localized>;
 
 export type StringKey = keyof typeof STRINGS;

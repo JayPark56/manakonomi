@@ -39,17 +39,24 @@ type CardsState =
   | { status: 'error'; kind: TcgErrorKind }
   | { status: 'done'; cards: TcgCard[] };
 
+type SortMode = 'default' | 'price';
+
 export function TcgCardListScreen({
   onBack,
   onSelectCard,
+  initialSetId,
 }: {
   onBack: () => void;
   onSelectCard: (card: TcgCard) => void;
+  /** Preselect this set (matched against the real set list); falls back to the
+   *  newest booster if there's no exact match. Used by "View this set". */
+  initialSetId?: string;
 }) {
   const tr = useT();
   const [setsState, setSetsState] = useState<SetsState>({ status: 'loading' });
   const [activeSet, setActiveSet] = useState<TcgSet | null>(null);
   const [cardsState, setCardsState] = useState<CardsState>({ status: 'loading' });
+  const [sortMode, setSortMode] = useState<SortMode>('default');
   const [retry, setRetry] = useState(0);
 
   // Load the set list once; default to the newest booster set.
@@ -61,7 +68,10 @@ export function TcgCardListScreen({
         if (controller.signal.aborted) return;
         setSetsState({ status: 'done', sets });
         const boosters = sets.filter((s) => s.kind === 'set');
-        const next = boosters[boosters.length - 1] ?? sets[0] ?? null;
+        // "View this set": exact-match the card's set id against the real list
+        // (handles irregular ids like OP15-EB04); else default to newest booster.
+        const matched = initialSetId ? sets.find((s) => s.id === initialSetId) : undefined;
+        const next = matched ?? boosters[boosters.length - 1] ?? sets[0] ?? null;
         setActiveSet(next);
         // No sets at all → settle the cards state to empty so the grid shows
         // the localized empty state instead of a permanent spinner.
@@ -72,7 +82,7 @@ export function TcgCardListScreen({
         setSetsState({ status: 'error', kind: tcgErrorKind(err) });
       });
     return () => controller.abort();
-  }, [retry]);
+  }, [retry, initialSetId]);
 
   // Load the active set's cards whenever it changes.
   useEffect(() => {
@@ -114,6 +124,13 @@ export function TcgCardListScreen({
         />
       )}
 
+      {setsState.status === 'done' && activeSet != null && (
+        <View style={styles.sortRow}>
+          <SortPill active={sortMode === 'default'} label={tr('tcgSortDefault')} onPress={() => setSortMode('default')} />
+          <SortPill active={sortMode === 'price'} label={tr('tcgSortPrice')} onPress={() => setSortMode('price')} />
+        </View>
+      )}
+
       {(setsState.status === 'loading' || (setsState.status === 'done' && cardsState.status === 'loading')) && (
         <View style={styles.center}>
           <ActivityIndicator color={colors.textSecondary} size="large" />
@@ -136,7 +153,7 @@ export function TcgCardListScreen({
       )}
 
       {setsState.status === 'done' && cardsState.status === 'done' && (
-        <CardGrid cards={cardsState.cards} onSelectCard={onSelectCard} />
+        <CardGrid cards={cardsState.cards} sortMode={sortMode} onSelectCard={onSelectCard} />
       )}
     </View>
   );
@@ -155,6 +172,7 @@ function SetChipBar({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.chipScroll}
       contentContainerStyle={styles.chipBar}
     >
       {sets.map((set) => {
@@ -179,11 +197,27 @@ function SetChipBar({
   );
 }
 
+function SortPill({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.sortPill, active && styles.sortPillActive]}>
+      <ThemedText
+        weight={active ? 'semiBold' : 'medium'}
+        size={typography.caption}
+        color={active ? colors.onAccent : colors.textSecondary}
+      >
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
 function CardGrid({
   cards,
+  sortMode,
   onSelectCard,
 }: {
   cards: TcgCard[];
+  sortMode: SortMode;
   onSelectCard: (card: TcgCard) => void;
 }) {
   const tr = useT();
@@ -196,7 +230,12 @@ function CardGrid({
     listKey.current += 1;
   }
 
-  const data = useMemo(() => cards, [cards]);
+  // Price sort is high→low with no-price cards last; default keeps API order.
+  // Array.sort is stable, so equal prices keep their original order.
+  const data = useMemo(() => {
+    if (sortMode !== 'price') return cards;
+    return [...cards].sort((a, b) => (b.marketPrice ?? -1) - (a.marketPrice ?? -1));
+  }, [cards, sortMode]);
 
   if (cards.length === 0) {
     return (
@@ -212,6 +251,7 @@ function CardGrid({
     <FlatList
       key={listKey.current}
       data={data}
+      style={styles.grid}
       keyExtractor={(item) => item.id}
       numColumns={numColumns}
       columnWrapperStyle={numColumns > 1 ? { gap } : undefined}
@@ -277,10 +317,34 @@ const styles = StyleSheet.create({
   title: {
     marginTop: spacing.xs,
   },
+  // flexGrow/Shrink 0 keeps the horizontal bar from being collapsed to a sliver
+  // by the grid below it (the bug: it shrank to ~10px and clipped the chips).
+  chipScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   chipBar: {
     gap: spacing.sm,
     paddingVertical: spacing.md,
     paddingRight: spacing.xl,
+    alignItems: 'center',
+  },
+  grid: {
+    flex: 1,
+  },
+  sortRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  sortPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+  },
+  sortPillActive: {
+    backgroundColor: colors.accent,
   },
   chip: {
     paddingHorizontal: spacing.md,

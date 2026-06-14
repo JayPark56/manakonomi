@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -17,6 +17,9 @@ import {
   setOnboardingCompleted,
   type AuthMode,
 } from './src/auth/authStorage';
+import { IntroProvider, useIntro } from './src/intro/IntroContext';
+import { IntroOverlay } from './src/intro/IntroOverlay';
+import { getIntroCompleted } from './src/intro/introStorage';
 import { SearchTab } from './src/screens/SearchTab';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { ForYouScreen } from './src/screens/ForYouScreen';
@@ -98,9 +101,11 @@ function AppNavigator() {
 function AppGate() {
   const tr = useT();
   const auth = useAuth();
+  const intro = useIntro();
   const [splashDone, setSplashDone] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [signInError, setSignInError] = useState<string | null>(null);
+  const introChecked = useRef(false);
 
   useEffect(() => {
     getOnboardingCompleted().then((done) => setNeedsOnboarding(!done));
@@ -129,6 +134,17 @@ function AppGate() {
 
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
+  // First in-app entry (onboarding done, splash finished): auto-show the intro
+  // once. Runs only here so it never appears over the splash or onboarding.
+  useEffect(() => {
+    if (needsOnboarding === false && splashDone && !introChecked.current) {
+      introChecked.current = true;
+      getIntroCompleted().then((done) => {
+        if (!done) intro.open();
+      });
+    }
+  }, [needsOnboarding, splashDone, intro]);
+
   let content: ReactNode = null; // null until resolved — splash covers it
   if (needsOnboarding === false) {
     content = <AppNavigator />;
@@ -150,6 +166,9 @@ function AppGate() {
   return (
     <View style={styles.flex}>
       {content}
+      {/* Intro sits above the app but below the splash, so it never covers the
+          splash/onboarding — only the in-app home once the splash has gone. */}
+      <IntroOverlay />
       {showSplash && <SplashOverlay onDone={handleSplashDone} />}
     </View>
   );
@@ -176,9 +195,11 @@ export default function App() {
       <LanguageProvider>
         <AuthProvider>
           <UserDataProvider>
-            <StatusBar style="light" />
-            <SyncManager />
-            <AppGate />
+            <IntroProvider>
+              <StatusBar style="light" />
+              <SyncManager />
+              <AppGate />
+            </IntroProvider>
           </UserDataProvider>
         </AuthProvider>
       </LanguageProvider>

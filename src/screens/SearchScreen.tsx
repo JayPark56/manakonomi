@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -20,6 +20,8 @@ import { ThemedText } from '../components/ThemedText';
 import { genreLabel, type StringKey } from '../i18n/i18n';
 import { useLanguage, useT } from '../i18n/LanguageContext';
 import { findKoAlias } from '../data/koAliases';
+import { pickRandomFamousTitles } from '../data/famousManga';
+import { useIntro } from '../intro/IntroContext';
 import { detectScript } from '../lib/script';
 import { displayTitle, secondaryTitle } from '../lib/titles';
 import { MAX_CONTENT_WIDTH } from '../lib/layout';
@@ -56,11 +58,23 @@ export function SearchScreen({
   onGetRecommendations,
 }: SearchScreenProps) {
   const tr = useT();
+  const { lang } = useLanguage();
+  const intro = useIntro();
   // Shared feedback state so the form survives moving between the results-list
   // footer and the bottom-anchored area.
   const feedback = useFeedbackController();
   const [query, setQuery] = useState('');
   const [state, setState] = useState<SearchState>({ status: 'idle' });
+  // Rotating example titles for the idle hint: random at mount, re-rolled each
+  // time the field is cleared, re-localized when the language changes.
+  const [hintSeed, setHintSeed] = useState(0);
+  const hintExamples = useMemo(() => pickRandomFamousTitles(3, lang), [lang, hintSeed]);
+  const wasEmpty = useRef(true);
+  useEffect(() => {
+    const empty = query.trim() === '';
+    if (empty && !wasEmpty.current) setHintSeed((s) => s + 1);
+    wasEmpty.current = empty;
+  }, [query]);
 
   useEffect(() => {
     const q = query.trim();
@@ -107,7 +121,18 @@ export function SearchScreen({
         >
           {tr('appTitle')}
         </ThemedText>
-        <LanguageSwitch />
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={intro.open}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={tr('a11yHelp')}
+            testID="help"
+          >
+            <Ionicons name="help-circle-outline" size={24} color={colors.textSecondary} />
+          </Pressable>
+          <LanguageSwitch />
+        </View>
       </View>
       <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.subtitle}>
         {tr('subtitle')}
@@ -138,7 +163,7 @@ export function SearchScreen({
 
       {state.status === 'idle' && (
         <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.message}>
-          {tr('searchHint')}
+          {`${tr('searchHintPrefix')} ${hintExamples.join(', ')}`}
         </ThemedText>
       )}
       {state.status === 'loading' && (
@@ -322,7 +347,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   headerTitle: {
-    flexShrink: 1, // yield to the switcher rather than pushing it off-screen
+    flexShrink: 1, // yield to the actions rather than pushing them off-screen
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flexShrink: 0,
   },
   subtitle: {
     marginTop: spacing.xs,

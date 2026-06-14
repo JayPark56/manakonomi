@@ -4,7 +4,16 @@ import { useT } from '../i18n/LanguageContext';
 import { formatPrice, type TcgCard } from '../tcg/optcgApi';
 import { colors, radius, spacing, typography } from '../theme';
 
-export function TcgCardDetailScreen({ card, onBack }: { card: TcgCard; onBack: () => void }) {
+export function TcgCardDetailScreen({
+  card,
+  onBack,
+  onViewSet,
+}: {
+  card: TcgCard;
+  onBack: () => void;
+  /** Opens the card list filtered to this card's set. */
+  onViewSet: (setId: string) => void;
+}) {
   const tr = useT();
 
   return (
@@ -54,6 +63,17 @@ export function TcgCardDetailScreen({ card, onBack }: { card: TcgCard; onBack: (
             {tr('tcgPriceFrom')}
           </ThemedText>
         </View>
+
+        {card.setId.length > 0 && (
+          <Pressable
+            onPress={() => onViewSet(card.setId)}
+            style={({ pressed }) => [styles.viewSet, pressed && styles.viewSetPressed]}
+          >
+            <ThemedText weight="bold" size={typography.label} color={colors.onAccent}>
+              {tr('tcgViewSet')}
+            </ThemedText>
+          </Pressable>
+        )}
       </ScrollView>
     </View>
   );
@@ -128,5 +148,16 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     backgroundColor: colors.card,
     gap: spacing.xs,
+  },
+  viewSet: {
+    alignSelf: 'stretch',
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+  },
+  viewSetPressed: {
+    opacity: 0.85,
   },
 });

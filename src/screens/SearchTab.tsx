@@ -9,7 +9,7 @@ import { TcgCardListScreen } from './TcgCardListScreen';
 import { TcgCardDetailScreen } from './TcgCardDetailScreen';
 import { colors } from '../theme';
 
-type TcgNav = { view: 'list' } | { view: 'detail'; card: TcgCard };
+type TcgNav = { view: 'list'; initialSetId?: string } | { view: 'detail'; card: TcgCard };
 
 /**
  * Search flow: search (with a multi-select set) → recommendations with a
@@ -60,11 +60,18 @@ export function SearchTab() {
         <View style={styles.screen}>
           {tcg.view === 'list' ? (
             <TcgCardListScreen
+              initialSetId={tcg.initialSetId}
               onBack={() => setTcg(null)}
               onSelectCard={(card) => setTcg({ view: 'detail', card })}
             />
           ) : (
-            <TcgCardDetailScreen card={tcg.card} onBack={() => setTcg({ view: 'list' })} />
+            <TcgCardDetailScreen
+              card={tcg.card}
+              // The list re-mounts on back; restore the card's own set so the
+              // user returns to the set they were browsing (not the newest).
+              onBack={() => setTcg({ view: 'list', initialSetId: tcg.card.setId })}
+              onViewSet={(setId) => setTcg({ view: 'list', initialSetId: setId })}
+            />
           )}
         </View>
       )}
