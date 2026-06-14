@@ -216,6 +216,27 @@ const STRINGS = {
   tcgSortDefault: { en: 'Default', ko: '기본', ja: '標準' },
   tcgSortPrice: { en: 'Price ↓', ko: '비싼 순', ja: '高い順' },
   tcgViewSet: { en: 'View this set', ko: '이 세트 전체 보기', ja: 'このセットを見る' },
+  // Union Arena (Hunter x Hunter)
+  uaEntry: {
+    en: 'View Hunter x Hunter Union Arena cards',
+    ko: '헌터x헌터 유니온아레나 카드 보기',
+    ja: 'ハンターハンター ユニオンアリーナのカードを見る',
+  },
+  uaTitle: {
+    en: 'Hunter x Hunter (Union Arena)',
+    ko: '헌터x헌터 유니온아레나',
+    ja: 'ハンターハンター ユニオンアリーナ',
+  },
+  uaEmpty: { en: 'No cards to show', ko: '표시할 카드가 없어요', ja: '表示するカードがありません' },
+  uaSortRarity: { en: 'By rarity', ko: '레어도순', ja: 'レア度順' },
+  uaEffectLabel: { en: 'Effect', ko: '효과', ja: '効果' },
+  uaTriggerLabel: { en: 'Trigger', ko: '트리거', ja: 'トリガー' },
+  // Card-service (TCG) server error — distinct from the AniList-worded errServer.
+  errTcgServer: {
+    en: 'Card service is having trouble\nPlease try again',
+    ko: '카드 서비스에 잠시 문제가 있어요\n다시 시도해 주세요',
+    ja: 'カードサービスに問題が発生しています\nもう一度お試しください',
+  },
   // Intro / how-to coach cards
   introNext: { en: 'Next', ko: '다음', ja: '次へ' },
   introDone: { en: 'Done', ko: '시작하기', ja: 'はじめる' },

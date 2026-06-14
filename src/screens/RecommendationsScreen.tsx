@@ -22,7 +22,7 @@ import {
 } from '../lib/taste';
 import { useGridLayout, centeredContent } from '../lib/layout';
 import { displayTitle } from '../lib/titles';
-import { anyCardGame } from '../tcg/mangaCardGames';
+import { cardGameForSources, type CardGame } from '../tcg/mangaCardGames';
 import { useUserData } from '../user/UserDataContext';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -38,7 +38,7 @@ interface RecommendationsScreenProps {
   onSelectRecommendation: (manga: Manga) => void;
   onBack: () => void;
   /** Opens the linked card-game browser (shown only when a source links one). */
-  onOpenTcg?: () => void;
+  onOpenTcg?: (game: CardGame) => void;
 }
 
 interface LoadedData {
@@ -159,12 +159,12 @@ function RecommendationsContent({
   profile: ReturnType<typeof buildTasteProfile>;
   lang: ReturnType<typeof useLanguage>['lang'];
   onSelect: (manga: Manga) => void;
-  onOpenTcg?: () => void;
+  onOpenTcg?: (game: CardGame) => void;
 }) {
   const tr = useT();
   const { cardWidth } = useGridLayout();
   const { sources, candidates } = data;
-  const showTcg = onOpenTcg != null && anyCardGame(sources);
+  const tcgGame = onOpenTcg != null ? cardGameForSources(sources) : null;
 
   // Reasons compare against the single source, or the shared taste of the set.
   const reasonSource = combined ? sharedTasteOf(sources) : sources[0];
@@ -181,13 +181,13 @@ function RecommendationsContent({
     <ScrollView contentContainerStyle={styles.scrollContent}>
       {combined ? <PicksHeader sources={sources} /> : <SourceHeader source={sources[0]} />}
 
-      {showTcg && (
+      {tcgGame != null && (
         <Pressable
-          onPress={onOpenTcg}
+          onPress={() => onOpenTcg?.(tcgGame)}
           style={({ pressed }) => [styles.tcgEntry, pressed && styles.tcgEntryPressed]}
         >
           <ThemedText weight="bold" size={typography.label} color={colors.onAccent}>
-            {tr('tcgEntry')}
+            {tr(tcgGame === 'union-arena' ? 'uaEntry' : 'tcgEntry')}
           </ThemedText>
         </Pressable>
       )}

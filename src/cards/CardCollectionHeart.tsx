@@ -1,31 +1,35 @@
 import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { TcgCard } from '../tcg/optcgApi';
+import type { UnionArenaCard } from '../tcg/unionArenaApi';
 import { useT } from '../i18n/LanguageContext';
 import { colors } from '../theme';
 import { useCardCollection } from './CardCollectionContext';
 
-interface CardCollectionHeartProps {
-  card: TcgCard;
+type CardCollectionHeartProps = (
+  | { game: 'one-piece'; card: TcgCard }
+  | { game: 'union-arena'; card: UnionArenaCard }
+) & {
   size?: number;
   /** Dark scrim behind the heart for use on top of card images. */
   onCover?: boolean;
-}
+};
 
 /**
  * Collection toggle: filled coral heart when the card is in the collection,
  * outline otherwise. Mirrors FavoriteStar (manga) but targets the card store.
  * As a nested Pressable it captures its own taps, so it never triggers the
- * surrounding card's navigation.
+ * surrounding card's navigation. Works for either card game (discriminated).
  */
-export function CardCollectionHeart({ card, size = 22, onCover = false }: CardCollectionHeartProps) {
+export function CardCollectionHeart(props: CardCollectionHeartProps) {
+  const { card, size = 22, onCover = false } = props;
   const tr = useT();
   const { isCollected, toggle } = useCardCollection();
   const collected = isCollected(card.id);
 
   return (
     <Pressable
-      onPress={() => toggle(card)}
+      onPress={() => toggle(props)}
       hitSlop={8}
       style={onCover && styles.scrim}
       accessibilityRole="button"

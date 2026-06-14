@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
 import { getFirebase } from '../auth/firebase';
 import { useAuth } from '../auth/AuthContext';
-import { useCardCollection, type CardCollection } from '../cards/CardCollectionContext';
+import {
+  normalizeCollection,
+  useCardCollection,
+  type CardCollection,
+} from '../cards/CardCollectionContext';
 import { mergeCardCollections } from './cardMerge';
 
 const WRITE_DEBOUNCE_MS = 800;
@@ -42,9 +46,11 @@ export function CardSyncManager() {
       try {
         const ref = collectionDocRef(fb.db, uid);
         const snap = await getDoc(ref);
-        const remote =
-          (snap.exists() ? (snap.data()?.cardCollection as CardCollection | undefined) : undefined) ??
-          {};
+        // Normalize the cloud doc so legacy entries (saved before multi-game
+        // support) get game:'one-piece' before merging.
+        const remote = normalizeCollection(
+          snap.exists() ? snap.data()?.cardCollection : undefined,
+        );
         const merged = mergeCardCollections(dataRef.current, remote);
         if (cancelled) return;
         replaceAll(merged);

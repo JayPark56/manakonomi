@@ -22,8 +22,9 @@ export function CardCollectionScreen({
     () => Object.values(collection).sort((a, b) => b.savedAt - a.savedAt),
     [collection],
   );
+  // Only One Piece cards carry a price; Union Arena contributes 0.
   const total = useMemo(
-    () => cards.reduce((sum, c) => sum + (c.marketPrice ?? 0), 0),
+    () => cards.reduce((sum, c) => sum + (c.game === 'one-piece' ? (c.marketPrice ?? 0) : 0), 0),
     [cards],
   );
 
@@ -121,9 +122,12 @@ function Tile({
           <ThemedText weight="medium" size={typography.micro} color={colors.textSecondary}>
             {card.rarity}
           </ThemedText>
-          <ThemedText weight="semiBold" size={typography.micro} color={colors.accent}>
-            {formatPrice(card.marketPrice)}
-          </ThemedText>
+          {/* Price only for One Piece; Union Arena has none. */}
+          {card.game === 'one-piece' && (
+            <ThemedText weight="semiBold" size={typography.micro} color={colors.accent}>
+              {formatPrice(card.marketPrice)}
+            </ThemedText>
+          )}
         </View>
       </View>
     </Pressable>

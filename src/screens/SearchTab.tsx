@@ -5,14 +5,23 @@ import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { Manga } from '../api/anilist';
 import type { TcgCard } from '../tcg/optcgApi';
+import type { UnionArenaCard } from '../tcg/unionArenaApi';
+import type { CardGame } from '../tcg/mangaCardGames';
 import { useRecsRequest, type RootTabParamList } from '../nav/RecsRequestContext';
 import { SearchScreen } from './SearchScreen';
 import { RecommendationsScreen } from './RecommendationsScreen';
 import { TcgCardListScreen } from './TcgCardListScreen';
 import { TcgCardDetailScreen } from './TcgCardDetailScreen';
+import { UnionArenaCardListScreen } from './UnionArenaCardListScreen';
+import { UnionArenaCardDetailScreen } from './UnionArenaCardDetailScreen';
 import { colors } from '../theme';
 
-type TcgNav = { view: 'list'; initialSetId?: string } | { view: 'detail'; card: TcgCard };
+// Card-game browser overlay state, discriminated by which game is open.
+type TcgNav =
+  | { game: 'optcg'; view: 'list'; initialSetId?: string }
+  | { game: 'optcg'; view: 'detail'; card: TcgCard }
+  | { game: 'union-arena'; view: 'list' }
+  | { game: 'union-arena'; view: 'detail'; card: UnionArenaCard };
 
 /**
  * Search flow: search (with a multi-select set) → recommendations with a
@@ -93,25 +102,37 @@ export function SearchTab() {
             mangaIds={current}
             onSelectRecommendation={(manga) => setStack((prev) => [...prev, [manga.id]])}
             onBack={handleRecsBack}
-            onOpenTcg={() => setTcg({ view: 'list' })}
+            onOpenTcg={(game: CardGame) => setTcg({ game, view: 'list' })}
           />
         </View>
       )}
       {tcg != null && (
         <View style={styles.screen}>
-          {tcg.view === 'list' ? (
-            <TcgCardListScreen
-              initialSetId={tcg.initialSetId}
+          {tcg.game === 'optcg' ? (
+            tcg.view === 'list' ? (
+              <TcgCardListScreen
+                initialSetId={tcg.initialSetId}
+                onBack={() => setTcg(null)}
+                onSelectCard={(card) => setTcg({ game: 'optcg', view: 'detail', card })}
+              />
+            ) : (
+              <TcgCardDetailScreen
+                card={tcg.card}
+                // The list re-mounts on back; restore the card's own set so the
+                // user returns to the set they were browsing (not the newest).
+                onBack={() => setTcg({ game: 'optcg', view: 'list', initialSetId: tcg.card.setId })}
+                onViewSet={(setId) => setTcg({ game: 'optcg', view: 'list', initialSetId: setId })}
+              />
+            )
+          ) : tcg.view === 'list' ? (
+            <UnionArenaCardListScreen
               onBack={() => setTcg(null)}
-              onSelectCard={(card) => setTcg({ view: 'detail', card })}
+              onSelectCard={(card) => setTcg({ game: 'union-arena', view: 'detail', card })}
             />
           ) : (
-            <TcgCardDetailScreen
+            <UnionArenaCardDetailScreen
               card={tcg.card}
-              // The list re-mounts on back; restore the card's own set so the
-              // user returns to the set they were browsing (not the newest).
-              onBack={() => setTcg({ view: 'list', initialSetId: tcg.card.setId })}
-              onViewSet={(setId) => setTcg({ view: 'list', initialSetId: setId })}
+              onBack={() => setTcg({ game: 'union-arena', view: 'list' })}
             />
           )}
         </View>

@@ -18,6 +18,7 @@ import { useUserData, type SavedManga } from '../user/UserDataContext';
 import { type CollectedCard } from '../cards/CardCollectionContext';
 import { CardCollectionScreen } from './CardCollectionScreen';
 import { TcgCardDetailScreen } from './TcgCardDetailScreen';
+import { UnionArenaCardDetailScreen } from './UnionArenaCardDetailScreen';
 import { centeredContent } from '../lib/layout';
 import { colors, radius, spacing, typography } from '../theme';
 
@@ -75,6 +76,8 @@ export function LibraryScreen() {
             onBack={() => setCardNav(null)}
             onSelectCard={(card) => setCardNav({ view: 'detail', card })}
           />
+        ) : cardNav.card.game === 'union-arena' ? (
+          <UnionArenaCardDetailScreen card={cardNav.card} onBack={() => setCardNav({ view: 'list' })} />
         ) : (
           <TcgCardDetailScreen card={cardNav.card} onBack={() => setCardNav({ view: 'list' })} />
         )}

@@ -2,21 +2,19 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { CardCollectionHeart } from '../cards/CardCollectionHeart';
 import { ThemedText } from '../components/ThemedText';
 import { useT } from '../i18n/LanguageContext';
-import { formatPrice, type TcgCard } from '../tcg/optcgApi';
+import type { UnionArenaCard } from '../tcg/unionArenaApi';
 import { colors, radius, spacing, typography } from '../theme';
 
-export function TcgCardDetailScreen({
+export function UnionArenaCardDetailScreen({
   card,
   onBack,
-  onViewSet,
 }: {
-  card: TcgCard;
+  card: UnionArenaCard;
   onBack: () => void;
-  /** Opens the card list filtered to this card's set. Omitted when reached from
-   *  the collection view (which has no set browser to return to). */
-  onViewSet?: (setId: string) => void;
 }) {
   const tr = useT();
+  const effect = card.effect.trim();
+  const trigger = card.trigger.trim();
 
   return (
     <View style={styles.container}>
@@ -39,52 +37,43 @@ export function TcgCardDetailScreen({
           <ThemedText weight="bold" size={typography.source} style={styles.name}>
             {card.name}
           </ThemedText>
-          <CardCollectionHeart game="one-piece" card={card} size={26} />
+          <CardCollectionHeart game="union-arena" card={card} size={26} />
         </View>
         <ThemedText weight="medium" size={typography.caption} color={colors.textSecondary} style={styles.cardId}>
-          {card.id}
+          {card.code}
         </ThemedText>
 
         <View style={styles.facts}>
           <Fact label={tr('tcgRarityLabel')} value={card.rarity} />
           <Fact label={tr('tcgTypeLabel')} value={card.type} />
-          <Fact label={tr('tcgSetLabel')} value={`${card.setName} (${card.setId})`} />
         </View>
 
-        {card.text != null && card.text.length > 0 && (
-          <ThemedText weight="regular" size={typography.caption} color={colors.textSecondary} style={styles.cardText}>
-            {card.text}
-          </ThemedText>
-        )}
-
-        <View style={styles.priceBox}>
-          <ThemedText weight="medium" size={typography.caption} color={colors.textSecondary}>
-            {tr('tcgMarketPrice')}
-          </ThemedText>
-          <ThemedText weight="bold" size={typography.header} color={colors.accent}>
-            {formatPrice(card.marketPrice)}
-          </ThemedText>
-          <ThemedText weight="light" size={typography.micro} color={colors.textSecondary}>
-            {tr('tcgPriceFrom')}
-          </ThemedText>
-        </View>
-
-        {onViewSet != null && card.setId.length > 0 && (
-          <Pressable
-            onPress={() => onViewSet(card.setId)}
-            style={({ pressed }) => [styles.viewSet, pressed && styles.viewSetPressed]}
-          >
-            <ThemedText weight="bold" size={typography.label} color={colors.onAccent}>
-              {tr('tcgViewSet')}
+        {/* No price in this source — the effect/trigger rules text is the detail. */}
+        {effect.length > 0 && (
+          <View style={styles.textBlock}>
+            <ThemedText weight="medium" size={typography.micro} color={colors.textSecondary}>
+              {tr('uaEffectLabel')}
             </ThemedText>
-          </Pressable>
+            <ThemedText weight="regular" size={typography.label} style={styles.bodyText}>
+              {effect}
+            </ThemedText>
+          </View>
+        )}
+        {trigger.length > 0 && (
+          <View style={styles.textBlock}>
+            <ThemedText weight="medium" size={typography.micro} color={colors.textSecondary}>
+              {tr('uaTriggerLabel')}
+            </ThemedText>
+            <ThemedText weight="regular" size={typography.label} style={styles.bodyText}>
+              {trigger}
+            </ThemedText>
+          </View>
         )}
       </ScrollView>
     </View>
   );
 }
 
-/** A label above a value, used for rarity / type / set rows. */
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.fact}>
@@ -138,6 +127,7 @@ const styles = StyleSheet.create({
   },
   cardId: {
     marginTop: spacing.xs,
+    alignSelf: 'flex-start',
   },
   facts: {
     alignSelf: 'stretch',
@@ -147,28 +137,12 @@ const styles = StyleSheet.create({
   fact: {
     gap: 2,
   },
-  cardText: {
+  textBlock: {
     alignSelf: 'stretch',
     marginTop: spacing.lg,
-    lineHeight: 18,
-  },
-  priceBox: {
-    alignSelf: 'stretch',
-    marginTop: spacing.xl,
-    padding: spacing.lg,
-    borderRadius: radius,
-    backgroundColor: colors.card,
     gap: spacing.xs,
   },
-  viewSet: {
-    alignSelf: 'stretch',
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: radius,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-  },
-  viewSetPressed: {
-    opacity: 0.85,
+  bodyText: {
+    lineHeight: 20,
   },
 });

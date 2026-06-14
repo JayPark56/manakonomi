@@ -27,7 +27,7 @@ import { colors, radius, spacing, typography } from '../theme';
 const ERROR_KEY: Record<TcgErrorKind, StringKey> = {
   'rate-limit': 'errRateLimit',
   network: 'errNetwork',
-  server: 'errServer',
+  server: 'errTcgServer',
 };
 
 type SetsState =
@@ -306,7 +306,7 @@ function TcgCardTile({
       )}
       {/* Nested Pressable captures its own taps → no navigation into the card. */}
       <View style={styles.tileHeart}>
-        <CardCollectionHeart card={card} size={18} onCover />
+        <CardCollectionHeart game="one-piece" card={card} size={18} onCover />
       </View>
       <View style={styles.tileBody}>
         <ThemedText weight="semiBold" size={typography.cardTitle} numberOfLines={1}>
