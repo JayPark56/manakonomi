@@ -203,6 +203,11 @@ const STRINGS = {
   },
   tcgTitle: { en: 'One Piece TCG', ko: '원피스 카드게임', ja: 'ONE PIECEカードゲーム' },
   tcgEmpty: { en: 'No cards in this set', ko: '이 세트에 카드가 없어요', ja: 'このセットにカードがありません' },
+  tcgPickSet: {
+    en: 'Pick a set above to browse cards',
+    ko: '위에서 세트를 선택해 카드를 둘러보세요',
+    ja: '上のセットを選んでカードを見る',
+  },
   tcgMarketPrice: { en: 'Market price', ko: '시세', ja: '相場価格' },
   tcgPriceFrom: { en: 'Prices from TCGPlayer', ko: 'TCGPlayer 시세 기준', ja: '価格はTCGPlayer提供' },
   tcgSetLabel: { en: 'Set', ko: '세트', ja: 'セット' },

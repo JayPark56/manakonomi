@@ -20,6 +20,7 @@ import {
 } from './src/auth/authStorage';
 import { CardCollectionProvider } from './src/cards/CardCollectionContext';
 import { IntroProvider, useIntro } from './src/intro/IntroContext';
+import { RecsRequestProvider } from './src/nav/RecsRequestContext';
 import { IntroOverlay } from './src/intro/IntroOverlay';
 import { getIntroCompleted } from './src/intro/introStorage';
 import { SearchTab } from './src/screens/SearchTab';
@@ -199,10 +200,12 @@ export default function App() {
           <UserDataProvider>
             <CardCollectionProvider>
               <IntroProvider>
-                <StatusBar style="light" />
-                <SyncManager />
-                <CardSyncManager />
-                <AppGate />
+                <RecsRequestProvider>
+                  <StatusBar style="light" />
+                  <SyncManager />
+                  <CardSyncManager />
+                  <AppGate />
+                </RecsRequestProvider>
               </IntroProvider>
             </CardCollectionProvider>
           </UserDataProvider>

@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { Manga } from '../api/anilist';
 import type { TcgCard } from '../tcg/optcgApi';
+import { useRecsRequest, type RootTabParamList } from '../nav/RecsRequestContext';
 import { SearchScreen } from './SearchScreen';
 import { RecommendationsScreen } from './RecommendationsScreen';
 import { TcgCardListScreen } from './TcgCardListScreen';
@@ -17,11 +20,43 @@ type TcgNav = { view: 'list'; initialSetId?: string } | { view: 'detail'; card: 
  * id for normal taps, several for combined recommendations.
  */
 export function SearchTab() {
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const [stack, setStack] = useState<number[][]>([]);
   const [selection, setSelection] = useState<Manga[]>([]);
   // Card-game browser overlay, opened from a linked manga's recommendations.
   const [tcg, setTcg] = useState<TcgNav | null>(null);
+  // True when the current recs session was opened from the Library tab, so
+  // backing out of the last recs screen returns there instead of to search.
+  const [fromLibrary, setFromLibrary] = useState(false);
   const current = stack.length > 0 ? stack[stack.length - 1] : null;
+
+  // Clear the Library-origin latch whenever this tab is left by other means
+  // (e.g. tapping a tab in the bar), so a later manual return + Back doesn't
+  // bounce to Library. The next real Library tap re-sets it via pendingId.
+  useEffect(() => navigation.addListener('blur', () => setFromLibrary(false)), [navigation]);
+
+  // A Library tap (other tab) requests this manga's recommendations: seed the
+  // stack as a fresh single-source drill-down, exactly like a search result.
+  const { pendingId, clearRequest } = useRecsRequest();
+  useEffect(() => {
+    if (pendingId == null) return;
+    setStack([[pendingId]]);
+    setTcg(null);
+    setFromLibrary(true);
+    clearRequest();
+  }, [pendingId, clearRequest]);
+
+  // Back out of recs: pop the drill-down; at the root, return to Library if the
+  // session started there, otherwise fall back to the search screen.
+  const handleRecsBack = () => {
+    if (stack.length <= 1 && fromLibrary) {
+      setFromLibrary(false);
+      setStack([]);
+      navigation.navigate('library');
+      return;
+    }
+    setStack((prev) => prev.slice(0, -1));
+  };
 
   const toggleSelection = (manga: Manga) => {
     setSelection((prev) =>
@@ -36,12 +71,18 @@ export function SearchTab() {
       {/* Search stays mounted so query/results/selection survive going back. */}
       <View style={[styles.screen, current != null && styles.hidden]}>
         <SearchScreen
-          onSelect={(manga) => setStack([[manga.id]])}
+          onSelect={(manga) => {
+            setFromLibrary(false);
+            setStack([[manga.id]]);
+          }}
           selection={selection}
           onToggleSelection={toggleSelection}
           onClearSelection={() => setSelection([])}
           onGetRecommendations={() => {
-            if (selection.length > 0) setStack([selection.map((m) => m.id)]);
+            if (selection.length > 0) {
+              setFromLibrary(false);
+              setStack([selection.map((m) => m.id)]);
+            }
           }}
         />
       </View>
@@ -51,7 +92,7 @@ export function SearchTab() {
             key={current.join(',')}
             mangaIds={current}
             onSelectRecommendation={(manga) => setStack((prev) => [...prev, [manga.id]])}
-            onBack={() => setStack((prev) => prev.slice(0, -1))}
+            onBack={handleRecsBack}
             onOpenTcg={() => setTcg({ view: 'list' })}
           />
         </View>

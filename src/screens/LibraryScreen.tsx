@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import Slider from '@react-native-community/slider';
 import { Ionicons, Octicons } from '@expo/vector-icons';
 import type { Manga } from '../api/anilist';
 import { useAuth } from '../auth/AuthContext';
+import { useRecsRequest, type RootTabParamList } from '../nav/RecsRequestContext';
 import { FavoriteStar } from '../components/FavoriteStar';
 import { StarRating } from '../components/StarRating';
 import { ThemedText } from '../components/ThemedText';
@@ -47,10 +50,22 @@ interface LibrarySection {
 export function LibraryScreen() {
   const tr = useT();
   const { data } = useUserData();
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
+  const { requestRecs } = useRecsRequest();
   // Minimum-rating filter for the Rated section (0 = show all), in 0.5 steps.
   const [minRating, setMinRating] = useState(0);
   // Card-collection sub-navigation overlay (list ↔ detail).
   const [cardNav, setCardNav] = useState<CardNav | null>(null);
+
+  // Tapping a manga opens its recommendations in the Search tab (same flow as
+  // tapping a search result), then switches to that tab.
+  const openRecs = useCallback(
+    (manga: Manga) => {
+      requestRecs(manga.id);
+      navigation.navigate('search');
+    },
+    [requestRecs, navigation],
+  );
 
   if (cardNav) {
     return (
@@ -143,7 +158,7 @@ export function LibraryScreen() {
                 </ThemedText>
               ) : null
             }
-            renderItem={({ item }) => <LibraryRow item={item} />}
+            renderItem={({ item }) => <LibraryRow item={item} onOpen={openRecs} />}
           />
         )}
       </View>
@@ -267,7 +282,7 @@ function AuthStatusRow() {
   );
 }
 
-function LibraryRow({ item }: { item: LibraryItem }) {
+function LibraryRow({ item, onOpen }: { item: LibraryItem; onOpen: (manga: Manga) => void }) {
   const tr = useT();
   const { lang } = useLanguage();
   const { manga } = item;
@@ -275,8 +290,10 @@ function LibraryRow({ item }: { item: LibraryItem }) {
   const primary = displayTitle(manga, lang);
   const secondary = secondaryTitle(manga, lang);
 
+  // Row opens recommendations; the nested heart and star controls capture their
+  // own taps (so rating/favoriting never triggers navigation).
   return (
-    <View style={styles.row}>
+    <Pressable onPress={() => onOpen(manga)} style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       {cover && <Image source={{ uri: cover }} style={styles.rowCover} />}
       <View style={styles.rowText}>
         <ThemedText weight="semiBold" size={typography.rowTitle} numberOfLines={1}>
@@ -292,7 +309,7 @@ function LibraryRow({ item }: { item: LibraryItem }) {
         </View>
       </View>
       <FavoriteStar manga={manga} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -397,6 +414,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.md,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  rowPressed: {
+    borderColor: colors.accent,
   },
   rowCover: {
     width: 52,

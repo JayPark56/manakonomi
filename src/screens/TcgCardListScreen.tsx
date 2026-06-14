@@ -87,7 +87,13 @@ export function TcgCardListScreen({
 
   // Load the active set's cards whenever it changes.
   useEffect(() => {
-    if (!activeSet) return;
+    // No set (deselected via the chip toggle): clear any stale error/cards so
+    // the prompt branch owns the render alone. 'loading' is never shown here —
+    // the loading branch requires activeSet != null.
+    if (!activeSet) {
+      setCardsState({ status: 'loading' });
+      return;
+    }
     const controller = new AbortController();
     setCardsState({ status: 'loading' });
     listCards(activeSet.id, activeSet.kind, controller.signal)
@@ -121,7 +127,8 @@ export function TcgCardListScreen({
         <SetChipBar
           sets={setsState.sets}
           activeId={activeSet?.id ?? null}
-          onSelect={setActiveSet}
+          // Toggle: re-tapping the selected chip deselects to the no-set state.
+          onSelect={(set) => setActiveSet((prev) => (prev?.id === set.id ? null : set))}
         />
       )}
 
@@ -132,13 +139,25 @@ export function TcgCardListScreen({
         </View>
       )}
 
-      {(setsState.status === 'loading' || (setsState.status === 'done' && cardsState.status === 'loading')) && (
+      {(setsState.status === 'loading' ||
+        (setsState.status === 'done' && activeSet != null && cardsState.status === 'loading')) && (
         <View style={styles.center}>
           <ActivityIndicator color={colors.textSecondary} size="large" />
         </View>
       )}
 
-      {(setsState.status === 'error' || cardsState.status === 'error') && (
+      {/* No set selected (deselected via chip toggle): prompt to pick one. */}
+      {setsState.status === 'done' && activeSet == null && (
+        <View style={styles.center}>
+          <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.message}>
+            {tr(setsState.sets.length === 0 ? 'tcgEmpty' : 'tcgPickSet')}
+          </ThemedText>
+        </View>
+      )}
+
+      {/* A cards error only applies while a set is selected, so it can't coexist
+          with the no-set prompt above. A sets-level error shows regardless. */}
+      {(setsState.status === 'error' || (activeSet != null && cardsState.status === 'error')) && (
         <View style={styles.center}>
           <ThemedText weight="medium" size={typography.label} color={colors.textSecondary} style={styles.message}>
             {tr(ERROR_KEY[setsState.status === 'error' ? setsState.kind : (cardsState as { kind: TcgErrorKind }).kind])}
@@ -153,7 +172,7 @@ export function TcgCardListScreen({
         </View>
       )}
 
-      {setsState.status === 'done' && cardsState.status === 'done' && (
+      {setsState.status === 'done' && activeSet != null && cardsState.status === 'done' && (
         <CardGrid cards={cardsState.cards} sortMode={sortMode} onSelectCard={onSelectCard} />
       )}
     </View>
